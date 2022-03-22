@@ -1,6 +1,6 @@
 fastapi==0.66.0
 uvicorn[standard]==0.14.0
-celery==5.1.2
+celery==5.2.3
 redis==3.5.3
 flower==1.0.0
 alembic==1.6.5
@@ -10,3 +10,6 @@ bpython==0.22.1
 watchgod==0.7
 Jinja2==3.0.1
 requests==2.25.1
+asgiref==3.4.1
+asyncio-redis==0.16.0
+broadcaster==0.2.0
