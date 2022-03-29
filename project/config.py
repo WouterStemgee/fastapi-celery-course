@@ -23,6 +23,13 @@ class BaseConfig:
         "WS_MESSAGE_QUEUE", "redis://127.0.0.1:6379/0"
     )
 
+    CELERY_BEAT_SCHEDULE: dict = {
+        "task-schedule-work": {
+            "task": "task_schedule_work",
+            "schedule": 5.0,  # five seconds
+        },
+    }
+
 
 class DevelopmentConfig(BaseConfig):
     pass
