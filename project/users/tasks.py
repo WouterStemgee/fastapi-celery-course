@@ -7,6 +7,8 @@ from celery import shared_task
 from celery.signals import task_postrun
 from celery.utils.log import get_task_logger
 
+from project.database import db_context
+
 logger = get_task_logger(__name__)
 
 
@@ -101,3 +103,12 @@ def task_process_notification(self):
         raise Exception()
 
     requests.post("https://httpbin.org/delay/5")
+
+
+@shared_task()
+def task_send_welcome_email(user_pk):
+    from project.users.models import User
+
+    with db_context() as session:
+        user = session.query(User).get(user_pk)
+        logger.info(f"send email to {user.email} {user.id}")

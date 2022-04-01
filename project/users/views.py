@@ -1,16 +1,19 @@
 import logging
 import random
+from string import ascii_lowercase
 
 import requests
 from celery.result import AsyncResult
-from fastapi import FastAPI, Request, Body
+from fastapi import FastAPI, Request, Body, Depends
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
 
 from . import users_router
 from .schemas import UserBody
-from .tasks import sample_task, task_process_notification
-
+from .tasks import sample_task, task_process_notification, task_send_welcome_email
+from .models import User
+from project.database import get_db_session
 
 logger = logging.getLogger(__name__)
 templates = Jinja2Templates(directory="project/users/templates")
@@ -78,3 +81,27 @@ def form_ws_example(request: Request):
 @users_router.get("/form_socketio/")
 def form_socketio_example(request: Request):
     return templates.TemplateResponse("form_socketio.html", {"request": request})
+
+
+@users_router.get("/transaction_celery/")
+def transaction_celery(session: Session = Depends(get_db_session)):
+    def random_username():
+        username = "".join([random.choice(ascii_lowercase) for i in range(5)])
+
+        return username
+
+    try:
+        username = random_username()
+        user = User(
+            username=f"{username}",
+            email=f"{username}@test.com",
+        )
+        session.add(user)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise
+
+    print(f"user {user.id} {user.username} is persistent now")
+    task_send_welcome_email.delay(user.id)  # type: ignore
+    return {"message": "done"}
