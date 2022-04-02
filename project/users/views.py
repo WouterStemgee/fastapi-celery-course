@@ -102,6 +102,6 @@ def transaction_celery(session: Session = Depends(get_db_session)):
         session.rollback()
         raise
 
-    print(f"user {user.id} {user.username} is persistent now")
+    logger.info(f"user {user.id} {user.username} is persistent now")
     task_send_welcome_email.delay(user.id)  # type: ignore
     return {"message": "done"}
