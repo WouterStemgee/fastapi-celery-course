@@ -8,6 +8,7 @@ from celery import shared_task
 from celery.signals import task_postrun
 from celery.utils.log import get_task_logger
 from celery.signals import after_setup_logger
+from project.celery_utils import custom_celery_task
 
 from project.database import db_context
 
@@ -31,20 +32,6 @@ def sample_task(email):
     from project.users.views import api_call
 
     api_call(email)
-
-
-@shared_task(bind=True)
-def task_process_notification(self):
-    try:
-        if not random.choice([0, 1]):
-            # mimic random error
-            raise Exception()
-
-        # this would block the I/O
-        requests.post("https://httpbin.org/delay/5")
-    except Exception as e:
-        logger.error("exception raised, it would be retry after 5 seconds")
-        raise self.retry(exc=e, countdown=5)
 
 
 @task_postrun.connect
@@ -92,14 +79,8 @@ def dynamic_example_three():
 #         raise self.retry(exc=e, countdown=5)
 
 
-@shared_task(
-    bind=True,
-    autoretry_for=(Exception,),
-    retry_backoff=5,
-    retry_jitter=True,
-    retry_kwargs={"max_retries": 7, "countdown": 5},
-)
-def task_process_notification(self):
+@custom_celery_task(max_retries=3)
+def task_process_notification():
     if not random.choice([0, 1]):
         # mimic random error
         raise Exception()
